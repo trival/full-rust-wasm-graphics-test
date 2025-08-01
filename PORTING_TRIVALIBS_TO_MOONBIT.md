@@ -1469,10 +1469,205 @@ Porting trivalibs to MoonBit offers several advantages:
 
 The key to success is maintaining a performance-first mindset while leveraging MoonBit's modern language features for an ergonomic API.
 
+## MoonBit Language Learnings and Best Practices
+
+Based on the actual implementation experience, here are important findings about MoonBit syntax and standard library:
+
+### 1. Type System and Syntax
+
+**Method Definition Syntax:**
+```moonbit
+// Correct: Methods are defined with explicit self parameter
+pub fn length(self : Vec2) -> Double {
+  (self.x * self.x + self.y * self.y).sqrt()
+}
+
+// For associated functions (constructors), use Type::name syntax
+pub fn Vec2::new(x : Double, y : Double) -> Vec2 {
+  { x, y }
+}
+```
+
+**Struct Initialization:**
+```moonbit
+// MoonBit uses braces without field names when order matches
+{ x, y }  // Equivalent to { x: x, y: y }
+```
+
+**Mutable Fields:**
+```moonbit
+pub struct Vec2 {
+  mut x : Double  // 'mut' keyword for mutable fields
+  mut y : Double
+}
+```
+
+### 2. Standard Library Differences
+
+**Math Functions:**
+```moonbit
+// MoonBit uses method syntax for math operations
+x.sqrt()     // NOT @math.sqrt(x)
+x.sin()      // NOT @math.sin(x)
+x.cos()      // NOT @math.cos(x)
+x.abs()      // NOT @math.abs(x)
+x.floor()    // NOT @math.floor(x)
+x.ceil()     // NOT @math.ceil(x)
+x.tan()      // NOT @math.tan(x)
+
+// Note: Some functions are deprecated and suggest @math.* alternatives
+// but the method syntax works and is cleaner
+```
+
+**No Built-in min/max:**
+```moonbit
+// Must implement your own
+pub fn clamp_scalar(x : Double, min_val : Double, max_val : Double) -> Double {
+  if x < min_val { min_val } else if x > max_val { max_val } else { x }
+}
+```
+
+### 3. Testing Framework
+
+**Test Assertions:**
+```moonbit
+// Old deprecated syntax (avoid):
+@test.eq!(a, b)
+@test.is_true!(condition)
+@test.fail!("message")
+
+// New correct syntax:
+assert_eq(a, b)
+assert_true(condition)
+panic("message")
+
+// Note: No parentheses needed after assert macros
+```
+
+**Test Declaration:**
+```moonbit
+test "test name" {
+  // test body
+}
+```
+
+### 4. Arrays and Loops
+
+**FixedArray:**
+```moonbit
+// MoonBit uses FixedArray for fixed-size arrays
+pub struct Mat4 {
+  mut data : FixedArray[Double]  // Size specified at creation
+}
+
+// Creation
+let arr = FixedArray::make(16, 0.0)  // size, initial value
+```
+
+**No Traditional For Loops:**
+```moonbit
+// Cannot do: for i in 0..9 { }
+// Must unroll loops manually:
+m.data[0] = other.data[0]
+m.data[1] = other.data[1]
+// ... etc
+```
+
+### 5. Constants and Variables
+
+**Constants:**
+```moonbit
+// Use lowercase 'let' for module-level constants
+let pi : Double = 3.14159265358979323846
+
+// NOT: pub let PI : Double = ...  // This causes errors
+```
+
+### 6. Operator Overloading Limitations
+
+**Binary Operators Must Have Same Types:**
+```moonbit
+// Valid:
+pub fn op_add(self : Vec2, other : Vec2) -> Vec2
+
+// Invalid - causes error:
+pub fn op_mul(self : Vec2, scalar : Double) -> Vec2
+
+// Workaround: Use methods instead
+pub fn mul(self : Vec2, scalar : Double) -> Vec2
+```
+
+### 7. Module System
+
+**Package Structure:**
+```
+src/math/
+├── moon.pkg.json  // Empty {} for basic packages
+├── vec2.mbt
+├── vec3.mbt
+├── mat3.mbt
+└── mat4.mbt
+```
+
+**Name Conflicts:**
+- Functions at module level share namespace
+- Methods with same name on different types cause conflicts
+- Solution: Use type-specific method names or proper module organization
+
+### 8. Optional Types
+
+```moonbit
+// MoonBit uses Option-like syntax with ?
+pub fn inverse(self : Mat3) -> Mat3? {
+  if determinant == 0 {
+    None
+  } else {
+    Some(result)
+  }
+}
+
+// Pattern matching
+match m.inverse() {
+  Some(inv) => { /* use inv */ }
+  None => panic("Not invertible")
+}
+```
+
+### 9. String Interpolation
+
+```moonbit
+// Use \{} for interpolation in strings
+"Value: \{x}"
+```
+
+### 10. Method Chaining
+
+```moonbit
+// Methods that modify self should return self for chaining
+pub fn add_mut(self : Vec3, other : Vec3) -> Vec3 {
+  self.x = self.x + other.x
+  self.y = self.y + other.y
+  self.z = self.z + other.z
+  self  // Return self for chaining
+}
+
+// Usage:
+pos.add_mut(velocity).scale(dt)
+```
+
+## Common Pitfalls to Avoid
+
+1. **Don't use uppercase for constants** - causes parse errors
+2. **Don't use @math.* package** - use method syntax on Double
+3. **Don't use old test assertion syntax** - use built-in assert_*
+4. **Don't try to use for loops** - unroll manually
+5. **Don't overload operators with different types** - use methods
+6. **Be careful with function name conflicts** - MoonBit doesn't namespace well
+
 ## Next Steps
 
-1. Set up MoonBit development environment
-2. Implement core math library with benchmarks
+1. ✅ Set up MoonBit development environment
+2. ✅ Implement core math library with tests
 3. Create minimal WebGPU FFI bindings
 4. Port simple triangle example
 5. Profile and optimize
