@@ -1,0 +1,3 @@
+[submodule "trivalibs"]
+	path = trivalibs
+	url = git@github.com:trivial-space/trivalibs.git
