@@ -1,21 +1,31 @@
 use trivalibs::math::transform::Transform;
 use trivalibs::painter::prelude::*;
+use trivalibs::painter::app::Event;
 use trivalibs::rendering::camera::{CamProps, PerspectiveCamera};
 use trivalibs::rendering::scene::SceneObject;
 use trivalibs::{map, prelude::*};
 
 const VERTICES: &[Vec3] = &[vec3(0.0, 5.0, 0.0), vec3(-2.5, 0., 0.0), vec3(2.5, 0., 0.0)];
 
+#[derive(Debug, Clone)]
+pub struct ColorEvent {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+}
+
 pub struct SimpleApp {
     cam: PerspectiveCamera,
     transform: Transform,
     model_mat: BindingBuffer<Mat4>,
     vp_mat: BindingBuffer<Mat4>,
+    color: BindingBuffer<Vec4>,
 
     canvas: Layer,
 }
 
-impl CanvasApp<()> for SimpleApp {
+
+impl CanvasApp<ColorEvent> for SimpleApp {
     fn init(p: &mut Painter) -> Self {
         let shade = p
             .shade(&[Float32x3])
@@ -33,13 +43,15 @@ impl CanvasApp<()> for SimpleApp {
         let model_mat = p.bind_mat4();
         let cam = p.bind_mat4();
 
-        let color = p.bind_const_vec4(vec4(1.0, 0.0, 0.0, 1.0));
+        let color = p.bind_vec4();
+        color.update(p, vec4(1.0, 0.0, 0.0, 1.0)); // Initialize with red
+        
         let shape = p
             .shape(form, shade)
             .with_bindings(map! {
                 0 => cam.binding(),
                 1 => model_mat.binding(),
-                2 => color,
+                2 => color.binding(),
             })
             .with_cull_mode(None)
             .create();
@@ -63,6 +75,7 @@ impl CanvasApp<()> for SimpleApp {
             transform,
             model_mat,
             vp_mat: cam,
+            color,
 
             canvas,
         }
@@ -84,5 +97,13 @@ impl CanvasApp<()> for SimpleApp {
         p.paint_and_show(self.canvas)
     }
 
-    fn event(&mut self, _e: Event<()>, _p: &mut Painter) {}
+    fn event(&mut self, e: Event<ColorEvent>, p: &mut Painter) {
+        match e {
+            Event::UserEvent(ColorEvent { r, g, b }) => {
+                self.color.update(p, vec4(r, g, b, 1.0));
+                p.request_next_frame();
+            }
+            _ => {}
+        }
+    }
 }
