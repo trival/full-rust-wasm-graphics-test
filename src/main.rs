@@ -3,7 +3,7 @@ use leptos::prelude::*;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use web_sys::HtmlCanvasElement;
 
-mod triangle;
+mod simple;
 use trivalibs::painter::app::CanvasApp;
 
 #[component]
@@ -106,7 +106,7 @@ fn main() {
 
             // For now, let's try starting the app anyway
             // This will create its own canvas, but shows the structure
-            triangle::TriangleApp::create().start();
+            simple::SimpleApp::create().start();
         }
     });
 }

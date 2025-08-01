@@ -1,56 +1,88 @@
+use trivalibs::math::transform::Transform;
 use trivalibs::painter::prelude::*;
-use trivalibs::prelude::*;
+use trivalibs::rendering::camera::{CamProps, PerspectiveCamera};
+use trivalibs::rendering::scene::SceneObject;
+use trivalibs::{map, prelude::*};
+
+const VERTICES: &[Vec3] = &[vec3(0.0, 5.0, 0.0), vec3(-2.5, 0., 0.0), vec3(2.5, 0., 0.0)];
 
 pub struct SimpleApp {
+    cam: PerspectiveCamera,
+    transform: Transform,
+    model_mat: BindingBuffer<Mat4>,
+    vp_mat: BindingBuffer<Mat4>,
+
     canvas: Layer,
-    time: f32,
 }
 
 impl CanvasApp<()> for SimpleApp {
     fn init(p: &mut Painter) -> Self {
-        log::info!("SimpleApp::init called");
-        
-        // Create the simplest possible layer - just a colored background
-        let canvas = p
-            .layer()
-            .with_clear_color(wgpu::Color {
-                r: 0.2,
-                g: 0.3,
-                b: 0.8,
-                a: 1.0,
+        let shade = p
+            .shade(&[Float32x3])
+            .with_bindings(&[
+                BINDING_BUFFER_VERT,
+                BINDING_BUFFER_VERT,
+                BINDING_BUFFER_FRAG,
+            ])
+            .create();
+        load_vertex_shader!(shade, p, "./shader/vertex.spv");
+        load_fragment_shader!(shade, p, "./shader/fragment.spv");
+
+        let form = p.form(VERTICES).create();
+
+        let model_mat = p.bind_mat4();
+        let cam = p.bind_mat4();
+
+        let color = p.bind_const_vec4(vec4(1.0, 0.0, 0.0, 1.0));
+        let shape = p
+            .shape(form, shade)
+            .with_bindings(map! {
+                0 => cam.binding(),
+                1 => model_mat.binding(),
+                2 => color,
             })
+            .with_cull_mode(None)
             .create();
 
-        log::info!("Layer created successfully");
+        let canvas = p
+            .layer()
+            .with_shape(shape)
+            .with_clear_color(wgpu::Color::BLACK)
+            .with_multisampling()
+            .create();
 
-        Self { 
+        let transform =
+            Transform::from_translation(vec3(0.0, -20.0, 0.0)).with_scale(Vec3::splat(8.0));
+
+        Self {
+            cam: PerspectiveCamera::create(CamProps {
+                fov: Some(0.6),
+                translation: Some(vec3(0.0, 0.0, 80.0)),
+                ..default()
+            }),
+            transform,
+            model_mat,
+            vp_mat: cam,
+
             canvas,
-            time: 0.0,
         }
     }
 
-    fn resize(&mut self, _p: &mut Painter, width: u32, height: u32) {
-        log::info!("SimpleApp::resize called: {}x{}", width, height);
+    fn resize(&mut self, p: &mut Painter, width: u32, height: u32) {
+        self.cam.set_aspect_ratio(width as f32 / height as f32);
+
+        self.vp_mat.update(p, self.cam.view_proj_mat());
     }
 
     fn update(&mut self, p: &mut Painter, tpf: f32) {
-        self.time += tpf;
-        
-        // Change color over time to verify updates are working
-        let _r = (self.time.sin() + 1.0) * 0.5;
-        let _g = ((self.time * 1.3).sin() + 1.0) * 0.5;
-        let _b = ((self.time * 0.7).sin() + 1.0) * 0.5;
-        
-        // Request next frame to keep animating
-        p.request_next_frame();
+        self.transform.rotate_y(tpf * 0.5);
+        self.model_mat.update(p, self.transform.model_mat());
     }
 
     fn render(&self, p: &mut Painter) -> Result<(), SurfaceError> {
-        log::debug!("SimpleApp::render called");
+        p.request_next_frame();
         p.paint_and_show(self.canvas)
     }
 
-    fn event(&mut self, _e: Event<()>, _p: &mut Painter) {
-        // No event handling needed
-    }
+    fn event(&mut self, _e: Event<()>, _p: &mut Painter) {}
 }
