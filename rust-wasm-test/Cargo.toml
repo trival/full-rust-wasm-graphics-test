@@ -12,11 +12,17 @@ path = "src/bin/simple.rs"
 
 [dependencies]
 leptos = { version = "0.8.3", features = ["csr"] }
-trivalibs = { path = "trivalibs/crates/trivalibs" }
-trivalibs_painter = { path = "trivalibs/crates/trivalibs_painter" }
+trivalibs = { path = "../trivalibs/crates/trivalibs" }
+trivalibs_painter = { path = "../trivalibs/crates/trivalibs_painter" }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlCanvasElement", "CanvasRenderingContext2d"] }
+web-sys = { version = "0.3", features = [
+	"Window",
+	"Document",
+	"Element",
+	"HtmlCanvasElement",
+	"CanvasRenderingContext2d",
+] }
 console_error_panic_hook = "0.1"
 log = "0.4"
 console_log = "1"
