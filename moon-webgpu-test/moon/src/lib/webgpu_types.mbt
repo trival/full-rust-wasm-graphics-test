@@ -1,6 +1,7 @@
 // WebGPU FFI type definitions for MoonBit
 
 // Core WebGPU types
+
 ///|
 pub type GPU
 

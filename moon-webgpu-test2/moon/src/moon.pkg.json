@@ -1,0 +1,9 @@
+{
+	"import": [],
+	"link": {
+		"js": {
+			"exports": ["greeting"],
+			"format": "esm"
+		}
+	}
+}

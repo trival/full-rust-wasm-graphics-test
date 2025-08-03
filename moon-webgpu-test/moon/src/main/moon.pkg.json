@@ -1,6 +1,6 @@
 {
 	"is-main": true,
-	"import": ["lib"],
+	"import": ["moon-webgpu/lib"],
 	"link": {
 		"js": {
 			"exports": ["create_webgpu_renderer"],
