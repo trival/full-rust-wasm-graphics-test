@@ -1,0 +1,10 @@
+{
+	"is-main": true,
+	"import": ["lib"],
+	"link": {
+		"js": {
+			"exports": ["create_webgpu_renderer"],
+			"format": "esm"
+		}
+	}
+}
