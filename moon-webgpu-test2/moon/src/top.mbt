@@ -160,22 +160,20 @@ async fn awaitDevice(promise : GPUDevicePromise) -> GPUDevice raise {
 
 ///|
 extern "js" fn js_set_timeout(f : () -> Unit, duration~ : Int) -> Unit =
-  #| (f, duration) => setTimeout(f, duration)
+  #| setTimeout
 
 ///|
 async fn sleep(duration : Int) -> Unit raise {
   suspend(fn(resume_ok, _resume_err) {
-    js_set_timeout(duration~, fn() { resume_ok(()) }) |> ignore
+    js_set_timeout(duration~, fn() { resume_ok(()) })
   })
 }
 
 ///|
-extern "js" fn log_device(device : GPUDevice) -> Unit =
-  #| (device) => console.log(device)
+fn log_device(device : GPUDevice) -> Unit = "console" "log"
 
 ///|
-extern "js" fn log_gpu(msg : GPU) -> Unit =
-  #| (msg) => console.log(msg)
+fn log_gpu(msg : GPU) -> Unit = "console" "log"
 
 ///|
 pub fn greeting() -> Unit {
