@@ -33,5 +33,4 @@ gloo-timers = { version = "0.3", features = ["futures"] }
 
 [profile.release]
 
-opt-level = "z"
 lto = true
