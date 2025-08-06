@@ -1,15 +1,14 @@
-use leptos::prelude::*;
 use leptos::html;
-use web_sys::HtmlCanvasElement;
-use trivalibs::painter::app::{CanvasApp, CanvasHandle};
-use leptos::wasm_bindgen::JsCast;
+use leptos::prelude::*;
+use trivalibs::painter::app::{AppConfig, CanvasApp, CanvasHandle};
+use trivalibs::utils::default;
 
-mod simple;
-use simple::{SimpleApp, ColorEvent};
+mod render;
+use render::{ColorEvent, SimpleApp};
 
+#[allow(non_snake_case)]
 #[component]
 fn App(handle: CanvasHandle<ColorEvent>, canvas_ref: NodeRef<html::Canvas>) -> impl IntoView {
-
     // State for UI controls
     let (color_r, set_color_r) = signal(1.0);
     let (color_g, set_color_g) = signal(0.0);
@@ -20,7 +19,7 @@ fn App(handle: CanvasHandle<ColorEvent>, canvas_ref: NodeRef<html::Canvas>) -> i
         let r = color_r.get();
         let g = color_g.get();
         let b = color_b.get();
-        
+
         let _ = handle.send_event(ColorEvent { r, g, b });
     });
 
@@ -73,9 +72,9 @@ fn App(handle: CanvasHandle<ColorEvent>, canvas_ref: NodeRef<html::Canvas>) -> i
                     </label>
                 </div>
             </div>
-            <canvas 
+            <canvas
                 node_ref=canvas_ref
-                style="flex: 1; width: 100%;" 
+                style="flex: 1; width: 100%;"
                 id="wgpu-canvas"
             />
         </div>
@@ -86,9 +85,6 @@ fn main() {
     // Set up panic hook
     console_error_panic_hook::set_once();
 
-    // Create a channel to pass the canvas from Leptos to the graphics app
-    let (tx, rx) = std::sync::mpsc::channel::<HtmlCanvasElement>();
-    
     // Create canvas node ref
     let canvas_ref = NodeRef::<html::Canvas>::new();
     let canvas_ref_for_app = canvas_ref.clone();
@@ -98,34 +94,24 @@ fn main() {
     let handle = app.get_handle();
 
     // Mount Leptos app
-    leptos::mount::mount_to_body(move || view! { 
-        <App handle=handle canvas_ref=canvas_ref /> 
+    leptos::mount::mount_to_body(move || {
+        view! {
+            <App handle=handle canvas_ref=canvas_ref />
+        }
     });
 
     // Get the canvas element after DOM is ready and start the app
     wasm_bindgen_futures::spawn_local(async move {
         // Wait a bit for DOM to be ready
         gloo_timers::future::TimeoutFuture::new(50).await;
-        
+
         // Get the canvas element
         if let Some(canvas) = canvas_ref_for_app.get() {
-            let canvas_element: HtmlCanvasElement = canvas.dyn_into().unwrap();
-            let _ = tx.send(canvas_element);
-        }
-        
-        // Wait for canvas and configure the app with it
-        #[cfg(target_arch = "wasm32")]
-        if let Ok(canvas) = rx.recv() {
-            use trivalibs::painter::app::AppConfig;
-            let mut config = AppConfig::default();
-            config.canvas = Some(canvas);
-            app.config(config).start();
-        }
-        
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let _ = rx.recv(); // Consume the message even if we don't use it
-            app.start();
+            app.config(AppConfig {
+                canvas: Some(canvas),
+                ..default()
+            })
+            .start();
         }
     });
 }

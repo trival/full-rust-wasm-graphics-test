@@ -1,6 +1,6 @@
 use trivalibs::math::transform::Transform;
-use trivalibs::painter::prelude::*;
 use trivalibs::painter::app::Event;
+use trivalibs::painter::prelude::*;
 use trivalibs::rendering::camera::{CamProps, PerspectiveCamera};
 use trivalibs::rendering::scene::SceneObject;
 use trivalibs::{map, prelude::*};
@@ -24,7 +24,6 @@ pub struct SimpleApp {
     canvas: Layer,
 }
 
-
 impl CanvasApp<ColorEvent> for SimpleApp {
     fn init(p: &mut Painter) -> Self {
         let shade = p
@@ -45,7 +44,7 @@ impl CanvasApp<ColorEvent> for SimpleApp {
 
         let color = p.bind_vec4();
         color.update(p, vec4(1.0, 0.0, 0.0, 1.0)); // Initialize with red
-        
+
         let shape = p
             .shape(form, shade)
             .with_bindings(map! {
@@ -90,10 +89,10 @@ impl CanvasApp<ColorEvent> for SimpleApp {
     fn update(&mut self, p: &mut Painter, tpf: f32) {
         self.transform.rotate_y(tpf * 0.5);
         self.model_mat.update(p, self.transform.model_mat());
+        p.request_next_frame();
     }
 
     fn render(&self, p: &mut Painter) -> Result<(), SurfaceError> {
-        p.request_next_frame();
         p.paint_and_show(self.canvas)
     }
 
@@ -101,7 +100,6 @@ impl CanvasApp<ColorEvent> for SimpleApp {
         match e {
             Event::UserEvent(ColorEvent { r, g, b }) => {
                 self.color.update(p, vec4(r, g, b, 1.0));
-                p.request_next_frame();
             }
             _ => {}
         }

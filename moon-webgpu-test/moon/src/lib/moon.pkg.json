@@ -1,8 +1,0 @@
-{
-	"import": []
-	// "targets": {
-	// 	"webgpu_types.mbt": ["js"],
-	// 	"webgpu_init.mbt": ["js"],
-	// 	"renderer.mbt": ["js"]
-	// }
-}
