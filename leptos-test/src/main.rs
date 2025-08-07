@@ -109,6 +109,8 @@ fn main() {
         if let Some(canvas) = canvas_ref_for_app.get() {
             app.config(AppConfig {
                 canvas: Some(canvas),
+                use_vsync: true,
+                show_fps: true,
                 ..default()
             })
             .start();
