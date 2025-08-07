@@ -21,15 +21,25 @@ web-sys = { version = "0.3", features = [
 	"Document",
 	"Element",
 	"HtmlCanvasElement",
-	"CanvasRenderingContext2d",
+	"GpuCanvasContext",
 ] }
 console_error_panic_hook = "0.1"
 log = "0.4"
 console_log = "1"
 winit = "0.30"
 bytemuck = "1.20"
-wgpu = { version = "24.0", features = ["webgpu", "webgl"] }
+wgpu = { version = "26.0", features = [
+	"webgpu",
+	"webgl",
+	"spirv",
+], default-features = false }
 gloo-timers = { version = "0.3", features = ["futures"] }
+
+
+[profile.dev]
+
+opt-level = "z"
+lto = true
 
 [profile.release]
 
